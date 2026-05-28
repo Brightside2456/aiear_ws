@@ -1,0 +1,33 @@
+# ROS 2 gitignore
+
+# Build artifacts
+build/
+install/
+log/
+
+# IDE settings
+.vscode/
+.idea/
+.project
+.cproject
+.settings/
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local/Temporary files
+.DS_Store
+*.swp
+*.bak
+*~
+
+# Micro-ROS specific
+src/uros/micro-ROS-Agent/build/
+src/uros/micro_ros_msgs/build/
+# You might want to ignore specific vendor or large dependency folders if any
