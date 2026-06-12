@@ -51,7 +51,7 @@ def generate_launch_description():
     launch_rviz  = LaunchConfiguration('rviz')
 
     # ── 1. robot_state_publisher ──────────────────────────────────────
-    xacro_file = os.path.join(pkg_aiear, 'urdf', 'aiear.urdf.xacro')
+    xacro_file = os.path.join(pkg_aiear, 'urdf', 'aiear.xacro')
 
     robot_description = ParameterValue(
         Command([FindExecutable(name='xacro'), ' ', xacro_file]),

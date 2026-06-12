@@ -1,59 +1,79 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<robot>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <!-- mu1 and mu2 are friction coeficients -->
-    <gazebo reference="body_link">
-        <mu1>0.2</mu1>
-        <mu2>0.2</mu2>
-        <material>Gazebo/Yellow</material>
+    <!-- ================================================================
+       GAZEBO MATERIALS & SURFACE PROPERTIES
+       ================================================================ -->
+    <gazebo reference="base_link">
+        <material>Gazebo/Blue</material>
     </gazebo>
 
-    <gazebo reference="wheel1_link">
-        <mu1>0.2</mu1>
-        <mu2>0.2</mu2>
-        <material>Gazebo/Black</material>
-    </gazebo>
+    <xacro:macro name="gazebo_wheel" params="prefix">
+        <gazebo reference="${prefix}_wheel_link">
+            <material>Gazebo/Black</material>
+            <mu1 value="0.7" />
+            <mu2 value="0.7" />
+        </gazebo>
+    </xacro:macro>
 
-    <gazebo reference="wheel2_link">
-        <mu1>0.2</mu1>
-        <mu2>0.2</mu2>
-        <material>Gazebo/Black</material>
-    </gazebo>
+    <xacro:if value="${'$(arg wheel_count)' == '2'}">
+        <xacro:gazebo_wheel prefix="left" />
+        <xacro:gazebo_wheel prefix="right" />
+        <gazebo reference="caster_link">
+            <material>Gazebo/Grey</material>
+            <mu1 value="0.001" />
+            <mu2 value="0.001" />
+        </gazebo>
+    </xacro:if>
 
-    <gazebo reference="caster_link">
-        <mu1>0.000002</mu1>
-        <mu2>0.000002</mu2>
-        <material>Gazebo/Grey</material>
-    </gazebo>
+    <xacro:if value="${'$(arg wheel_count)' == '4'}">
+        <xacro:gazebo_wheel prefix="front_left" />
+        <xacro:gazebo_wheel prefix="front_right" />
+        <xacro:gazebo_wheel prefix="rear_left" />
+        <xacro:gazebo_wheel prefix="rear_right" />
+    </xacro:if>
 
 
-    <!-- Controller for the differential Drive robot -->
-    <gazebo>
-        <!-- Joint State publisher -->
-        <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
-            <!-- All these parameters are from the gz-sim-diff-drive-system pkg ...youre just required to pass your arguments  -->
-            <!-- wheels -->
-            <right_joint>wheel1_joint</right_joint>
-            <left_joint>wheel2_joint</left_joint>
-            <!-- kinematics -->
-            <wheel_separation>${2*s4}</wheel_separation>
-            <wheel_diameter>${2*r}</wheel_diameter>
-            <!-- limits -->
-            <max_linear_acceleration>10</max_linear_acceleration>
-            <!-- topic, frames and odometry -->
-            <topic>cmd_vel</topic>
-            <tf_topi>/tf</tf_topi>
-            <odom_topic>odom</odom_topic>
-            <frame_id>odom</frame_id>
-            <child_frame_id>base_footprint</child_frame_id>
-            <odom_publisher_frequency>30</odom_publisher_frequency>
-        </plugin>
+    <!-- ================================================================
+       GAZEBO PLUGINS (Simulation only)
+       ================================================================ -->
+    <xacro:unless value="$(arg use_ros2_control)">
+        <gazebo>
+            <!-- 2-Wheel Diff Drive -->
+            <xacro:if value="${'$(arg wheel_count)' == '2'}">
+                <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
+                    <left_joint>left_wheel_joint</left_joint>
+                    <right_joint>right_wheel_joint</right_joint>
+                    <wheel_separation>${wheelbase}</wheel_separation>
+                    <wheel_diameter>${2*wheel_radius}</wheel_diameter>
+                    <topic>cmd_vel</topic>
+                    <odom_topic>odom</odom_topic>
+                    <frame_id>odom</frame_id>
+                    <child_frame_id>base_footprint</child_frame_id>
+                </plugin>
+            </xacro:if>
 
-        <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
-            <topic>joint_states</topic>
-            <joint_name>wheel1_joint</joint_name>
-            <joint_name>wheel2_joint</joint_name>
-        </plugin>
-    </gazebo>
+            <!-- 4-Wheel Diff Drive (Skid Steer) -->
+            <xacro:if value="${'$(arg wheel_count)' == '4'}">
+                <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
+                    <left_joint>front_left_wheel_joint</left_joint>
+                    <left_joint>rear_left_wheel_joint</left_joint>
+                    <right_joint>front_right_wheel_joint</right_joint>
+                    <right_joint>rear_right_wheel_joint</right_joint>
+                    <wheel_separation>${wheelbase}</wheel_separation>
+                    <wheel_diameter>${2*wheel_radius}</wheel_diameter>
+                    <topic>cmd_vel</topic>
+                    <odom_topic>odom</odom_topic>
+                    <frame_id>odom</frame_id>
+                    <child_frame_id>base_footprint</child_frame_id>
+                </plugin>
+            </xacro:if>
+
+            <!-- Joint State Publisher -->
+            <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
+                <topic>joint_states</topic>
+            </plugin>
+        </gazebo>
+    </xacro:unless>
 
 </robot>

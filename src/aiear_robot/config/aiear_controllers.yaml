@@ -1,0 +1,38 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 30          # Hz — read/write cycle rate to the ESP32
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    diff_drive_controller:
+      type: diff_drive_controller/DiffDriveController
+
+diff_drive_controller:
+  ros__parameters:
+    left_wheel_names:  ["front_left_wheel_joint",  "rear_left_wheel_joint"]
+    right_wheel_names: ["front_right_wheel_joint", "rear_right_wheel_joint"]
+
+    # ---- AIEAR geometry ------------------------------------------------
+    wheel_separation: 0.323   # measured; calibrate multiplier later (skid-steer scrub)
+    wheel_radius: 0.055       # CHANGE to 0.110 if wheels are 220 mm across
+
+    # ---- odometry ------------------------------------------------------
+    publish_rate: 30.0
+    odom_frame_id: odom
+    base_frame_id: base_link
+    open_loop: false          # integrate from encoder feedback, not commands
+    enable_odom_tf: true      # set false later if EKF/robot_localization owns odom->base
+    pose_covariance_diagonal:  [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
+    twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
+
+    # ---- safety / limits ----------------------------------------------
+    cmd_vel_timeout: 0.5      # third watchdog layer, now in the controller
+    linear.x.max_velocity: 0.5        # m/s — sane indoor speeds; tune
+    linear.x.min_velocity: -0.5
+    linear.x.max_acceleration: 0.8    # m/s^2 — smooths Nav2's step commands
+    linear.x.min_acceleration: -0.8
+    angular.z.max_velocity: 2.0       # rad/s
+    angular.z.min_velocity: -2.0
+    angular.z.max_acceleration: 2.0
+    angular.z.min_acceleration: -2.0

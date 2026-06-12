@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="aiear">
+
+  <!-- ================= AIEAR geometry (EDIT to match your robot) ===== -->
+  <!-- wheel_radius: 0.055 m assumed (110 mm DIAMETER wheel).            -->
+  <!-- If your wheels really are 220 mm across, change to 0.110.         -->
+  <xacro:property name="wheel_radius" value="0.055" />
+  <xacro:property name="wheel_width" value="0.030" />
+  <xacro:property name="wheel_separation" value="0.323" />  <!-- left-right -->
+  <xacro:property name="wheel_base" value="0.300" />  <!-- front-rear: MEASURE -->
+  <xacro:property name="body_length" value="0.375" />
+  <xacro:property name="body_width" value="0.260" />
+  <xacro:property name="body_height" value="0.250" />
+
+  <!-- Lidar mount, measured from robot base (chassis bottom) -->
+  <xacro:property name="lidar_x" value="0.163" />
+  <xacro:property name="lidar_height" value="0.320" />
+
+  <!-- ============================ base ============================== -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="${body_length} ${body_width} ${body_height}" />
+      </geometry>
+      <material name="grey">
+        <color rgba="0.4 0.4 0.45 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${body_length} ${body_width} ${body_height}" />
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="4.0" />
+      <inertia ixx="0.05" ixy="0" ixz="0" iyy="0.05" iyz="0" izz="0.05" />
+    </inertial>
+  </link>
+
+  <!-- ====================== wheel macro ============================= -->
+  <xacro:macro name="wheel" params="name x y">
+    <link name="${name}_wheel">
+      <visual>
+        <origin rpy="${pi/2} 0 0" />
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}" />
+        </geometry>
+        <material name="black">
+          <color rgba="0.1 0.1 0.1 1" />
+        </material>
+      </visual>
+      <collision>
+        <origin rpy="${pi/2} 0 0" />
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}" />
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="0.3" />
+        <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
+      </inertial>
+    </link>
+    <joint name="${name}_wheel_joint" type="continuous">
+      <parent link="base_link" />
+      <child link="${name}_wheel" />
+      <origin xyz="${x} ${y} ${-body_height/2}" />
+      <axis xyz="0 1 0" />
+    </joint>
+  </xacro:macro>
+
+  <xacro:wheel name="front_left" x="${wheel_base/2}" y="${wheel_separation/2}" />
+  <xacro:wheel name="rear_left" x="${-wheel_base/2}" y="${wheel_separation/2}" />
+  <xacro:wheel name="front_right" x="${wheel_base/2}" y="${-wheel_separation/2}" />
+  <xacro:wheel name="rear_right" x="${-wheel_base/2}" y="${-wheel_separation/2}" />
+
+
+  <!-- ========================= RPLIDAR =============================== -->
+  <link name="laser">
+    <visual>
+      <geometry>
+        <cylinder radius="0.035" length="0.04" />
+      </geometry>
+      <material name="dark">
+        <color rgba="0.15 0.15 0.15 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="laser_joint" type="fixed">
+    <parent link="base_link" />
+    <child link="laser" />
+    <!-- z: height above chassis bottom, converted to base_link-center frame -->
+    <origin xyz="${lidar_x} 0 ${lidar_height - body_height/2}" rpy="0 0 0" />
+  </joint>
+
+  <!-- ======================= ros2_control =========================== -->
+  <ros2_control name="AiearSystem" type="system">
+    <hardware>
+      <plugin>aiear_hardware/AiearSystem</plugin>
+      <param name="device">/dev/aiear_esp32</param>   <!-- udev rule later -->
+      <param name="baud_rate">115200</param>
+      <param name="counts_per_rev">618</param>
+      <param name="reply_timeout_ms">25</param>
+      <param name="fl_joint">front_left_wheel_joint</param>
+      <param name="rl_joint">rear_left_wheel_joint</param>
+      <param name="fr_joint">front_right_wheel_joint</param>
+      <param name="rr_joint">rear_right_wheel_joint</param>
+    </hardware>
+
+    <joint name="front_left_wheel_joint">
+      <command_interface name="velocity" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="rear_left_wheel_joint">
+      <command_interface name="velocity" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="front_right_wheel_joint">
+      <command_interface name="velocity" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+    <joint name="rear_right_wheel_joint">
+      <command_interface name="velocity" />
+      <state_interface name="position" />
+      <state_interface name="velocity" />
+    </joint>
+  </ros2_control>
+
+</robot>

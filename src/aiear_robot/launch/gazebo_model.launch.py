@@ -1,115 +1,106 @@
 import os
-import xacro
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-
-
+from launch.substitutions import Command, LaunchConfiguration, FindExecutable
+from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description():
 
-    # first store the xacro name (the one you specified in the robot tag)of the urdf file... you'll need it later
-    # robotXacroName = "four_wheeled_diff_drive_robot" #From tutorial
-    robotXacroName = "aiear" #custom
-
-    # Specify the name of the pakage you used
+    # Specify the name of the package
     namePackage = "aiear_robot"
+    pkg_aiear = get_package_share_directory(namePackage)
+    
+    # ── Launch Arguments ──────────────────────────────────────────────
+    wheel_count_arg = DeclareLaunchArgument(
+        'wheel_count', default_value='2',
+        description='Number of wheels: 2 or 4'
+    )
+    use_ros2_control_arg = DeclareLaunchArgument(
+        'use_ros2_control', default_value='false',
+        description='Use ros2_control instead of simple gazebo plugins'
+    )
+    is_sim_arg = DeclareLaunchArgument(
+        'is_sim', default_value='true',
+        description='Whether we are in simulation or real hardware'
+    )
 
-    # now define the relative (to aiear_robot package) path to the xacro file defining the model
-    # modelFileRelativePath = 'model/robot.xacro'
-    modelFileRelativePath = 'urdf/aiear.xacro'
+    wheel_count = LaunchConfiguration('wheel_count')
+    use_ros2_control = LaunchConfiguration('use_ros2_control')
+    is_sim = LaunchConfiguration('is_sim')
 
-    # If you want to define your own empty world model uncomment this
-    # however,you then have to create empty_world.world
-    # worldFileRelativePath = 'model/empty_world.world'
+    # ── Robot Description (Xacro) ─────────────────────────────────────
+    xacro_file = os.path.join(pkg_aiear, 'model', 'robot.xacro')
 
-    # this is the absolute path to the model / urdf file
-    pathModelFile = os.path.join(get_package_share_directory(namePackage), modelFileRelativePath)
+    robot_description = ParameterValue(
+        Command([
+            FindExecutable(name='xacro'), ' ', xacro_file, ' ',
+            'wheel_count:=', wheel_count, ' ',
+            'use_ros2_control:=', use_ros2_control, ' ',
+            'is_sim:=', is_sim
+        ]),
+        value_type=str
+    )
 
-
-    # If youre using your own world model,uncomment this
-    # this is the absolute path to the world model
-    # pathModelFile = os.path.join(get_package_share_directory(namePackage), worldFileRelativePath)
-
-    # get the robot description from the xacro model file (By converting it to xml)
-    robotDescription = xacro.process_file(pathModelFile).toxml()
-
-    # This is the launch file from the gazebo_ros package
-    # we are getting that , well use it later with some arguments
-    gazebo_rosPackageLaunch = PythonLaunchDescriptionSource(launch_file_path=os.path.join(get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py'))
-
-    # this is the launch decription
-
-    # if youre using your own world model
-    # gazeboLaunch=IncludeLaunchDescription(gazebo_rosPackageLaunch, launch_arguments={
-    #     'gz_args': ['-r -v -v4 ', pathWorldFile],
-    #     'on_exit_shutdown' : 'true'
-    # }.items()
-    # )
-
-    # if youre using an empty world model 
-    gazeboLaunch = IncludeLaunchDescription(gazebo_rosPackageLaunch, launch_arguments={
-        'gz_args' : ['-r -v -v4 empty.sdf'],
-        'on_exit_shutdown': 'true'
-    }.items()
-    ) 
-
-    #R 1. obot State Publisher node
+    # ── Nodes ─────────────────────────────────────────────────────────
+    
+    # 1. Robot State Publisher
     nodeRobotStatePublisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='screen',
-        parameters=[
-            {
-                'robot_description' : robotDescription,
-                'use_sim_time': True
-            }
-        ]
+        parameters=[{
+            'robot_description': robot_description,
+            'use_sim_time': is_sim
+        }]
     )
 
-    # 2. Gazebo Node
+    # 2. Gazebo (only if is_sim is true)
+    gazebo_pkg = get_package_share_directory('ros_gz_sim')
+    gazeboLaunch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(gazebo_pkg, 'launch', 'gz_sim.launch.py')
+        ),
+        launch_arguments={
+            'gz_args': '-r -v 4 empty.sdf',
+            'on_exit_shutdown': 'true'
+        }.items()
+    )
+
+    # 3. Spawn Robot in Gazebo
     spawnModelNodeGazebo = Node(
         package='ros_gz_sim',
         executable='create',
         arguments=[
-            '-name', robotXacroName,
-            '-topic', "robot_description"
+            '-name', 'aiear_robot',
+            '-topic', 'robot_description'
         ],
         output='screen'
     )
 
-    # this block is the one that allows  ros to comminicate with gazebo
-    # by allowing us to send ky board commands as velociies to the robot in gazebo to control it
-    bridge_params = os.path.join(
-        get_package_share_directory(namePackage),
-        'parameters',
-        'bridge_parameters.yaml'
-    )
-    # 3. Bridge
+    # 4. ROS-GZ Bridge
+    bridge_params = os.path.join(pkg_aiear, 'parameters', 'bridge_parameters.yaml')
     start_gazebo_ros_bridge_cmd = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
-        arguments=[
-            '--ros-args',
-            '-p',
-            f"config_file:={bridge_params}",
-
-        ],
+        arguments=['--ros-args', '-p', f"config_file:={bridge_params}"],
         output='screen'
     )
 
-    launchDescriptionObject = LaunchDescription()
+    # ── Launch Description Assembly ───────────────────────────────────
+    ld = LaunchDescription()
     
-    # we add the gazeboLaunch
-    launchDescriptionObject.add_action(gazeboLaunch)
+    # Arguments
+    ld.add_action(wheel_count_arg)
+    ld.add_action(use_ros2_control_arg)
+    ld.add_action(is_sim_arg)
 
-    # we add the 3 nodes
-    launchDescriptionObject.add_action(spawnModelNodeGazebo)
-    launchDescriptionObject.add_action(nodeRobotStatePublisher)
-    launchDescriptionObject.add_action(start_gazebo_ros_bridge_cmd)
+    # Core Nodes
+    ld.add_action(nodeRobotStatePublisher)
+    ld.add_action(gazeboLaunch)
+    ld.add_action(spawnModelNodeGazebo)
+    ld.add_action(start_gazebo_ros_bridge_cmd)
 
-
-
-    return launchDescriptionObject
+    return ld

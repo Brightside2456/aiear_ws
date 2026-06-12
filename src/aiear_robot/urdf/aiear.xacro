@@ -23,60 +23,61 @@
 <robot name="aiear" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
 
-
   <!-- ================================================================
        PROPERTIES
        ================================================================ -->
 
   <!-- Chassis -->
-  <xacro:property name="chassis_length" value="0.35"/>
-  <xacro:property name="chassis_width"  value="0.28"/>
-  <xacro:property name="chassis_height" value="0.12"/>
-  <xacro:property name="chassis_mass"   value="3.0"/>
+  <xacro:property name="chassis_length" value="0.35" />
+  <xacro:property name="chassis_width" value="0.28" />
+  <xacro:property name="chassis_height" value="0.12" />
+  <xacro:property name="chassis_mass" value="3.0" />
 
   <!-- Wheels (JGB37-520B) -->
-  <xacro:property name="wheel_radius"   value="0.056"/>
-  <xacro:property name="wheel_width"    value="0.04"/>
-  <xacro:property name="wheel_mass"     value="0.3"/>
+  <xacro:property name="wheel_radius" value="0.056" />
+  <xacro:property name="wheel_width" value="0.04" />
+  <xacro:property name="wheel_mass" value="0.3" />
   <!-- Left-right wheelbase: 240 mm → y offset = ±120 mm -->
-  <xacro:property name="wheelbase"      value="0.24"/>
-  <xacro:property name="wheel_y"        value="${wheelbase/2.0}"/>
+  <xacro:property name="wheelbase" value="0.24" />
+  <xacro:property name="wheel_y" value="${wheelbase/2.0}" />
   <!-- Front/rear longitudinal position -->
-  <xacro:property name="wheel_front_x"  value="0.10"/>
-  <xacro:property name="wheel_rear_x"   value="-0.10"/>
+  <xacro:property name="wheel_front_x" value="0.10" />
+  <xacro:property name="wheel_rear_x" value="-0.10" />
   <!-- Wheel joint z relative to base_link (axle at chassis bottom) -->
-  <xacro:property name="wheel_z"        value="${-chassis_height/2}"/>
+  <xacro:property name="wheel_z" value="${-chassis_height/2}" />
 
   <!-- Caster (passive ball caster, ø50 mm) -->
   <!-- <xacro:property name="caster_radius"  value="0.025"/> -->
-   <xacro:property name="caster_radius"  value="0.040"/> 
-  <xacro:property name="caster_mass"    value="0.05"/>
-  <xacro:property name="caster_x"       value="0.13"/>
+  <xacro:property name="caster_radius" value="0.040" />
+  <xacro:property name="caster_mass" value="0.05" />
+  <xacro:property name="caster_x" value="0.13" />
   <!-- caster joint z: sphere centre must be at wheel_radius height from ground
        caster_z (from base_link) = wheel_radius − (wheel_radius + chassis_height/2)
                                  = −chassis_height/2 − (wheel_radius − caster_radius) -->
-  <xacro:property name="caster_z" value="${-(chassis_height/2 + wheel_radius - caster_radius)}"/>
+  <xacro:property name="caster_z" value="${-(chassis_height/2 + wheel_radius - caster_radius)}" />
 
   <!-- RPLiDAR A1 — total height from ground = 200 mm -->
-  <xacro:property name="lidar_radius"   value="0.038"/>
-  <xacro:property name="lidar_height"   value="0.040"/>
-  <xacro:property name="lidar_mass"     value="0.17"/>
+  <xacro:property name="lidar_radius" value="0.038" />
+  <xacro:property name="lidar_height" value="0.040" />
+  <xacro:property name="lidar_mass" value="0.17" />
   <!-- lidar_z from base_link: 0.200 − (wheel_radius + chassis_height/2) = 0.084 m -->
-  <xacro:property name="lidar_z"        value="${0.200 - wheel_radius - chassis_height/2}"/>
+  <xacro:property name="lidar_z" value="${0.200 - wheel_radius - chassis_height/2}" />
 
   <!-- Riser post connecting chassis top to LiDAR bottom -->
-  <xacro:property name="riser_radius"   value="0.008"/>
-  <xacro:property name="riser_height"   value="${lidar_z - chassis_height/2 - lidar_height/2}"/>
+  <xacro:property name="riser_radius" value="0.008" />
+  <xacro:property name="riser_height" value="${lidar_z - chassis_height/2 - lidar_height/2}" />
 
   <!-- IMX500 Camera — front-top edge, tilted 20 ° downward -->
-  <xacro:property name="cam_mass"       value="0.05"/>
-  <xacro:property name="cam_x"          value="${chassis_length/2}"/>
-  <xacro:property name="cam_z"          value="${chassis_height/2}"/>
-  <xacro:property name="cam_pitch"      value="${-20.0 * pi / 180.0}"/>
+  <xacro:property name="cam_mass" value="0.05" />
+  <xacro:property name="cam_x" value="${chassis_length/2}" />
+  <xacro:property name="cam_z" value="${chassis_height/2}" />
+  <xacro:property name="cam_pitch" value="${-20.0 * pi / 180.0}" />
   <!-- 60° horizontal FOV → 1.0472 rad -->
-  <xacro:property name="cam_fov"        value="1.0472"/>
+  <xacro:property name="cam_fov" value="1.0472" />
 
   <xacro:include filename="$(find aiear_robot)/urdf/robot_sensor_physics.gazebo" />
+  <!-- <xacro:include filename="$(find aiear_robot)/urdf/gazebo_control.xacro" /> -->
+  <xacro:include filename="$(find aiear_robot)/urdf/ros2_control.xacro" />
 
   <!-- ================================================================
        INERTIA MACROS
@@ -85,29 +86,29 @@
   <!-- Solid box: principal axes aligned with link frame -->
   <xacro:macro name="box_inertia" params="m x y z">
     <inertia ixx="${m*(y*y+z*z)/12}" ixy="0.0" ixz="0.0"
-             iyy="${m*(x*x+z*z)/12}" iyz="0.0"
-             izz="${m*(x*x+y*y)/12}"/>
+      iyy="${m*(x*x+z*z)/12}" iyz="0.0"
+      izz="${m*(x*x+y*y)/12}" />
   </xacro:macro>
 
   <!-- Cylinder spinning about Y axis (wheel orientation after rpy=pi/2 0 0) -->
   <xacro:macro name="wheel_inertia" params="m r h">
     <inertia ixx="${m*(3*r*r+h*h)/12}" ixy="0.0" ixz="0.0"
-             iyy="${m*r*r/2}"          iyz="0.0"
-             izz="${m*(3*r*r+h*h)/12}"/>
+      iyy="${m*r*r/2}" iyz="0.0"
+      izz="${m*(3*r*r+h*h)/12}" />
   </xacro:macro>
 
   <!-- Cylinder spinning about Z axis (lidar, riser) -->
   <xacro:macro name="cylinder_inertia_z" params="m r h">
     <inertia ixx="${m*(3*r*r+h*h)/12}" ixy="0.0" ixz="0.0"
-             iyy="${m*(3*r*r+h*h)/12}" iyz="0.0"
-             izz="${m*r*r/2}"/>
+      iyy="${m*(3*r*r+h*h)/12}" iyz="0.0"
+      izz="${m*r*r/2}" />
   </xacro:macro>
 
   <!-- Sphere -->
   <xacro:macro name="sphere_inertia" params="m r">
     <inertia ixx="${2*m*r*r/5}" ixy="0.0" ixz="0.0"
-             iyy="${2*m*r*r/5}" iyz="0.0"
-             izz="${2*m*r*r/5}"/>
+      iyy="${2*m*r*r/5}" iyz="0.0"
+      izz="${2*m*r*r/5}" />
   </xacro:macro>
 
   <!-- ================================================================
@@ -117,33 +118,33 @@
     <link name="${name}_wheel_link">
       <visual>
         <!-- Rotate cylinder from Z-axis to Y-axis for correct wheel orientation -->
-        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0" />
         <geometry>
-          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}" />
         </geometry>
         <material name="dark_grey">
-          <color rgba="0.2 0.2 0.2 1.0"/>
+          <color rgba="0.2 0.2 0.2 1.0" />
         </material>
       </visual>
       <collision>
-        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0" />
         <geometry>
-          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}" />
         </geometry>
       </collision>
       <inertial>
-        <mass value="${wheel_mass}"/>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
-        <xacro:wheel_inertia m="${wheel_mass}" r="${wheel_radius}" h="${wheel_width}"/>
+        <mass value="${wheel_mass}" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <xacro:wheel_inertia m="${wheel_mass}" r="${wheel_radius}" h="${wheel_width}" />
       </inertial>
     </link>
 
     <joint name="${name}_wheel_joint" type="continuous">
-      <parent link="base_link"/>
-      <child  link="${name}_wheel_link"/>
-      <origin xyz="${x} ${y} ${wheel_z}" rpy="0 0 0"/>
-      <axis xyz="0 1 0"/>
-      <dynamics damping="0.05" friction="0.05"/>
+      <parent link="base_link" />
+      <child link="${name}_wheel_link" />
+      <origin xyz="${x} ${y} ${wheel_z}" rpy="0 0 0" />
+      <axis xyz="0 1 0" />
+      <dynamics damping="0.05" friction="0.05" />
     </joint>
 
     <!-- Gazebo wheel surface properties -->
@@ -165,36 +166,39 @@
        ================================================================ -->
 
   <!-- base_footprint: ground-projected reference link (REP-105) -->
-  <link name="base_footprint"/>
+  <link name="base_footprint" />
 
   <joint name="base_footprint_joint" type="fixed">
-    <parent link="base_footprint"/>
-    <child  link="base_link"/>
-    <origin xyz="0 0 ${wheel_radius + chassis_height/2}" rpy="0 0 0"/>
+    <parent link="base_footprint" />
+    <child link="base_link" />
+    <origin xyz="0 0 ${wheel_radius + chassis_height/2}" rpy="0 0 0" />
   </joint>
 
   <!-- ── Chassis (base_link) ─────────────────────────────────────── -->
   <link name="base_link">
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
+        <box size="${chassis_length} ${chassis_width} ${chassis_height}" />
       </geometry>
       <material name="aiear_blue">
-        <color rgba="0.80 1.0 0.60 1.0"/>
+        <color rgba="0.80 1.0 0.60 1.0" />
       </material>
     </visual>
     <collision>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
+        <box size="${chassis_length} ${chassis_width} ${chassis_height}" />
       </geometry>
-    </collision> 
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <xacro:box_inertia m="${chassis_mass}"
-                         x="${chassis_length}"
-                         y="${chassis_width}"
-                         z="${chassis_height}"/>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <mass value="${chassis_mass}" />
+      <xacro:box_inertia
+        m="${chassis_mass}"
+        x="${chassis_length}"
+        y="${chassis_width}"
+        z="${chassis_height}" />
     </inertial>
   </link>
 
@@ -203,39 +207,39 @@
   </gazebo>
 
   <!-- ── Four Drive Wheels ─────────────────────────────────────── -->
-  <xacro:wheel name="front_left"  x="${wheel_front_x}"  y="${wheel_y}"/>
-  <xacro:wheel name="front_right" x="${wheel_front_x}"  y="${-wheel_y}"/>
-  <xacro:wheel name="rear_left"   x="${wheel_rear_x}"   y="${wheel_y}"/>
-  <xacro:wheel name="rear_right"  x="${wheel_rear_x}"   y="${-wheel_y}"/>
+  <xacro:wheel name="front_left" x="${wheel_front_x}" y="${wheel_y}" />
+  <xacro:wheel name="front_right" x="${wheel_front_x}" y="${-wheel_y}" />
+  <xacro:wheel name="rear_left" x="${wheel_rear_x}" y="${wheel_y}" />
+  <xacro:wheel name="rear_right" x="${wheel_rear_x}" y="${-wheel_y}" />
 
   <!-- ── Passive Caster Wheel (front underside) ────────────────── -->
   <link name="caster_wheel_link">
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <sphere radius="${caster_radius}"/>
+        <sphere radius="${caster_radius}" />
       </geometry>
       <material name="light_grey">
-        <color rgba="0.70 0.70 0.70 1.0"/>
+        <color rgba="0.70 0.70 0.70 1.0" />
       </material>
     </visual>
     <collision>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <sphere radius="${caster_radius}"/>
+        <sphere radius="${caster_radius}" />
       </geometry>
     </collision>
     <inertial>
-      <mass value="${caster_mass}"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <xacro:sphere_inertia m="${caster_mass}" r="${caster_radius}"/>
+      <mass value="${caster_mass}" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <xacro:sphere_inertia m="${caster_mass}" r="${caster_radius}" />
     </inertial>
   </link>
 
   <joint name="caster_wheel_joint" type="fixed">
-    <parent link="base_link"/>
-    <child  link="caster_wheel_link"/>
-    <origin xyz="${caster_x} 0 ${caster_z}" rpy="0 0 0"/>
+    <parent link="base_link" />
+    <child link="caster_wheel_link" />
+    <origin xyz="${caster_x} 0 ${caster_z}" rpy="0 0 0" />
   </joint>
 
   <!-- Zero friction so the caster slides freely -->
@@ -254,33 +258,33 @@
   <!-- ── LiDAR Riser Post ──────────────────────────────────────── -->
   <link name="lidar_riser_link">
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <cylinder radius="${riser_radius}" length="${riser_height}"/>
+        <cylinder radius="${riser_radius}" length="${riser_height}" />
       </geometry>
       <material name="aluminium">
-        <color rgba="0.75 0.75 0.75 1.0"/>
+        <color rgba="0.75 0.75 0.75 1.0" />
       </material>
     </visual>
     <collision>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <cylinder radius="${riser_radius}" length="${riser_height}"/>
+        <cylinder radius="${riser_radius}" length="${riser_height}" />
       </geometry>
     </collision>
     <inertial>
-      <mass value="0.05"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <xacro:cylinder_inertia_z m="0.05" r="${riser_radius}" h="${riser_height}"/>
+      <mass value="0.05" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <xacro:cylinder_inertia_z m="0.05" r="${riser_radius}" h="${riser_height}" />
     </inertial>
   </link>
 
   <!-- Riser base sits at chassis top; riser joint at chassis-top level -->
   <joint name="lidar_riser_joint" type="fixed">
-    <parent link="base_link"/>
-    <child  link="lidar_riser_link"/>
+    <parent link="base_link" />
+    <child link="lidar_riser_link" />
     <!-- Centre the riser between chassis top and lidar bottom -->
-    <origin xyz="0 0 ${chassis_height/2 + riser_height/2}" rpy="0 0 0"/>
+    <origin xyz="0 0 ${chassis_height/2 + riser_height/2}" rpy="0 0 0" />
   </joint>
 
   <!-- ── RPLiDAR A1 Sensor Link ─────────────────────────────────── -->
@@ -290,79 +294,76 @@
   -->
   <link name="lidar_link">
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <cylinder radius="${lidar_radius}" length="${lidar_height}"/>
+        <cylinder radius="${lidar_radius}" length="${lidar_height}" />
       </geometry>
       <material name="lidar_black">
-        <color rgba="0.10 0.10 0.10 1.0"/>
+        <color rgba="0.10 0.10 0.10 1.0" />
       </material>
     </visual>
     <collision>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <cylinder radius="${lidar_radius}" length="${lidar_height}"/>
+        <cylinder radius="${lidar_radius}" length="${lidar_height}" />
       </geometry>
     </collision>
     <inertial>
-      <mass value="${lidar_mass}"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${lidar_mass}" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <xacro:cylinder_inertia_z m="${lidar_mass}"
-                                 r="${lidar_radius}"
-                                 h="${lidar_height}"/>
+        r="${lidar_radius}"
+        h="${lidar_height}" />
     </inertial>
   </link>
 
   <joint name="lidar_joint" type="fixed">
-    <parent link="base_link"/>
-    <child  link="lidar_link"/>
-    <origin xyz="0 0 ${lidar_z}" rpy="0 0 0"/>
+    <parent link="base_link" />
+    <child link="lidar_link" />
+    <origin xyz="0 0 ${lidar_z}" rpy="0 0 0" />
   </joint>
 
   <!-- ── IMX500 Camera Link ─────────────────────────────────────── -->
   <link name="camera_link">
     <visual>
       <!-- Small rectangular module: 25 mm × 90 mm × 25 mm -->
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <box size="0.025 0.090 0.025"/>
+        <box size="0.025 0.090 0.025" />
       </geometry>
       <material name="cam_black">
-        <color rgba="0.05 0.05 0.05 1.0"/>
+        <color rgba="0.05 0.05 0.05 1.0" />
       </material>
     </visual>
     <collision>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <box size="0.025 0.090 0.025"/>
+        <box size="0.025 0.090 0.025" />
       </geometry>
     </collision>
     <inertial>
-      <mass value="${cam_mass}"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <xacro:box_inertia m="${cam_mass}" x="0.025" y="0.090" z="0.025"/>
+      <mass value="${cam_mass}" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <xacro:box_inertia m="${cam_mass}" x="0.025" y="0.090" z="0.025" />
     </inertial>
   </link>
 
   <!-- Camera optical frame (Z forward in camera convention) -->
-  <link name="camera_optical_link"/>
+  <link name="camera_optical_link" />
 
   <joint name="camera_joint" type="fixed">
-    <parent link="base_link"/>
-    <child  link="camera_link"/>
+    <parent link="base_link" />
+    <child link="camera_link" />
     <!-- Front-top edge; pitch down 20° -->
-    <origin xyz="${cam_x} 0 ${cam_z}" rpy="0 ${cam_pitch} 0"/>
+    <origin xyz="${cam_x} 0 ${cam_z}" rpy="0 ${cam_pitch} 0" />
   </joint>
 
   <joint name="camera_optical_joint" type="fixed">
-    <parent link="camera_link"/>
-    <child  link="camera_optical_link"/>
+    <parent link="camera_link" />
+    <child link="camera_optical_link" />
     <!-- ROS camera convention: rotate so Z points forward, Y points down -->
-    <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
+    <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}" />
   </joint>
 
-
-
-  
 
 </robot>

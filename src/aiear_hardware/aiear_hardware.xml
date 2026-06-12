@@ -1,0 +1,10 @@
+<library path="aiear_hardware">
+  <class name="aiear_hardware/AiearSystem"
+         type="aiear_hardware::AiearSystem"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      ros2_control SystemInterface for the AIEAR robot: serial link to the
+      ESP32 motor controller (4 encoders, per-side velocity PID).
+    </description>
+  </class>
+</library>
