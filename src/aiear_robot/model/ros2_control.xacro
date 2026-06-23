@@ -11,7 +11,7 @@
             <xacro:unless value="$(arg is_sim)">
                 <!-- This is where the real hardware plugin goes in the future -->
                 <plugin>aiear_hardware/AiearSystemHardware</plugin>
-                <param name="serial_port">/dev/ttyUSB0</param>
+                <param name="serial_port">/dev/aiear_esp32</param>
             </xacro:unless>
         </hardware>
 

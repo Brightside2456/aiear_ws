@@ -86,11 +86,11 @@
     </visual>
   </link>
   <joint name="laser_joint" type="fixed">
-    <parent link="base_link" />
-    <child link="laser" />
-    <!-- z: height above chassis bottom, converted to base_link-center frame -->
-    <origin xyz="${lidar_x} 0 ${lidar_height - body_height/2}" rpy="0 0 0" />
+    <parent link="base_link"/>
+    <child link="laser"/>
+    <origin xyz="0.163 0 ${0.32 - body_height/2}" rpy="0 0 3.14159"/>
   </joint>
+
 
   <!-- ======================= ros2_control =========================== -->
   <ros2_control name="AiearSystem" type="system">

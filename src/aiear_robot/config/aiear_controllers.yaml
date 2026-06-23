@@ -14,7 +14,9 @@ diff_drive_controller:
     right_wheel_names: ["front_right_wheel_joint", "rear_right_wheel_joint"]
 
     # ---- AIEAR geometry ------------------------------------------------
-    wheel_separation: 0.323   # measured; calibrate multiplier later (skid-steer scrub)
+    # wheel_separation: 0.323   # measured; calibrate multiplier later (skid-steer scrub)
+    # wheel_separation: 1.113    # was 0.323; corrects ~3.45x rotation over-report
+    wheel_separation: 1.373       #now 1.373
     wheel_radius: 0.055       # CHANGE to 0.110 if wheels are 220 mm across
 
     # ---- odometry ------------------------------------------------------
@@ -32,7 +34,8 @@ diff_drive_controller:
     linear.x.min_velocity: -0.5
     linear.x.max_acceleration: 0.8    # m/s^2 — smooths Nav2's step commands
     linear.x.min_acceleration: -0.8
-    angular.z.max_velocity: 2.0       # rad/s
+    # angular.z.max_velocity: 2.0       # rad/s
+    angular.z.max_velocity: 0.8 
     angular.z.min_velocity: -2.0
     angular.z.max_acceleration: 2.0
     angular.z.min_acceleration: -2.0
