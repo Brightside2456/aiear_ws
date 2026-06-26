@@ -12,6 +12,7 @@ install(DIRECTORY
   parameters
   model
   urdf
+  maps
   DESTINATION share/${PROJECT_NAME}/
 )
 

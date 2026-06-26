@@ -12,6 +12,7 @@ src/ros-controls*/
 **/install/
 **/log/
 src/rplidar_ros/
+src/aiear_sim/
 src/micro_ros_setup/
 src/uros/
 src/ros-controls*/
