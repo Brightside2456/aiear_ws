@@ -12,6 +12,16 @@ amcl:
     odom_frame_id: odom
     global_frame_id: map
     scan_topic: /scan
+
+    # Publish map→odom TF immediately at startup without requiring a manual
+    # "2D Pose Estimate" in RViz.  Update these to match wherever the robot
+    # physically sits when you first run the stack (map-frame coordinates).
+    set_initial_pose: true
+    initial_pose.x: 0.0
+    initial_pose.y: 0.0
+    initial_pose.z: 0.0
+    initial_pose.yaw: 0.0
+
     # motion model tuned for a skid-steer with lossy rotation odometry:
     # high alpha values = trust odometry LESS, lean on the laser
     robot_model_type: "nav2_amcl::DifferentialMotionModel"
@@ -42,6 +52,7 @@ bt_navigator:
 
 controller_server:
   ros__parameters:
+    enable_stamped_cmd_vel: true
     use_sim_time: false
     controller_frequency: 15.0    # Pi-friendly (20 Hz can starve on a Pi 4)
     min_x_velocity_threshold: 0.001
@@ -184,6 +195,7 @@ planner_server:
 
 behavior_server:
   ros__parameters:
+    enable_stamped_cmd_vel: true
     use_sim_time: false
     local_costmap_topic: local_costmap/costmap_raw
     global_costmap_topic: global_costmap/costmap_raw
@@ -205,6 +217,7 @@ behavior_server:
 
 velocity_smoother:
   ros__parameters:
+    enable_stamped_cmd_vel: true
     use_sim_time: false
     smoothing_frequency: 15.0
     scale_velocities: False

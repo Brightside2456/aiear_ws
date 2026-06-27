@@ -10,6 +10,7 @@ controller_manager:
 
 diff_drive_controller:
   ros__parameters:
+    # use_stamped_vel does not exist in Jazzy — diff_drive_controller always uses TwistStamped
     left_wheel_names:  ["front_left_wheel_joint",  "rear_left_wheel_joint"]
     right_wheel_names: ["front_right_wheel_joint", "rear_right_wheel_joint"]
 
@@ -27,6 +28,9 @@ diff_drive_controller:
     enable_odom_tf: true      # set false later if EKF/robot_localization owns odom->base
     pose_covariance_diagonal:  [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
     twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
+
+    # ---- cmd_vel type --------------------------------------------------
+    # use_stamped_vel: false    # accept geometry_msgs/Twist (Nav2 Jazzy output via twist_mux)
 
     # ---- safety / limits ----------------------------------------------
     cmd_vel_timeout: 0.5      # third watchdog layer, now in the controller
