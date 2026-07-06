@@ -1,66 +1,72 @@
+"""Top-level deployment bringup: hardware + LiDAR + localization + Nav2.
+
+Replaces the manual sequence:
+  ros2 launch aiear_robot aiear_hardware.launch.py      (was aiear_bringup.launch.py)
+  ros2 run rplidar_ros rplidar_composition --ros-args \
+      -p serial_port:=/dev/rplidar -p serial_baudrate:=115200 \
+      -p frame_id:=laser -p angle_compensate:=true
+  ros2 launch aiear_robot aiear_nav2.launch.py
+"""
 import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import RegisterEventHandler
-from launch.event_handlers import OnProcessExit
-from launch.substitutions import Command
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
-    # NOTE: adjust 'aiear_robot' if you place these files in another package
-    pkg_share = get_package_share_directory('aiear_robot')
+    aiear_share = get_package_share_directory('aiear_robot')
+    launch_dir  = os.path.join(aiear_share, 'launch')
 
-    urdf_xacro = os.path.join(pkg_share, 'urdf', 'aiear.urdf.xacro')
-    controllers_yaml = os.path.join(pkg_share, 'config', 'aiear_controllers.yaml')
+    default_map = os.path.join(aiear_share, 'maps', 'aiear_map_last_floor_hall.yaml')
+    map_arg = DeclareLaunchArgument('map', default_value=default_map)
 
-    robot_description = ParameterValue(
-        Command(['xacro ', urdf_xacro]), value_type=str)
-
-    # Publishes /robot_description (topic) and TF from /joint_states
-    robot_state_publisher = Node(
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        parameters=[{'robot_description': robot_description}],
-        output='both',
+    # ── Hardware: robot_state_publisher + ros2_control + controllers ─────────
+    hardware = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(launch_dir, 'aiear_hardware.launch.py')),
     )
 
-    # Jazzy pattern: controller_manager subscribes to /robot_description
-    control_node = Node(
-        package='controller_manager',
-        executable='ros2_control_node',
-        parameters=[controllers_yaml],
-        remappings=[('~/robot_description', '/robot_description')],
-        output='both',
+    # ── RPLiDAR A1 ────────────────────────────────────────────────────────────
+    rplidar = Node(
+        package='rplidar_ros',
+        executable='rplidar_composition',
+        name='rplidar_composition',
+        output='screen',
+        parameters=[{
+            'serial_port':      '/dev/rplidar',
+            'serial_baudrate':  115200,
+            'frame_id':         'laser',
+            'angle_compensate': True,
+        }],
+        # Survives the stale-fd failure mode after USB re-enumeration
+        respawn=True,
+        respawn_delay=3.0,
     )
 
-    joint_state_broadcaster_spawner = Node(
-        package='controller_manager',
-        executable='spawner',
-        arguments=['joint_state_broadcaster',
-                   '--controller-manager', '/controller_manager'],
-    )
-
-    diff_drive_spawner = Node(
-        package='controller_manager',
-        executable='spawner',
-        arguments=['diff_drive_controller',
-                   '--controller-manager', '/controller_manager'],
-    )
-
-    # Start diff_drive only after joint_state_broadcaster is up
-    delay_diff_drive = RegisterEventHandler(
-        OnProcessExit(
-            target_action=joint_state_broadcaster_spawner,
-            on_exit=[diff_drive_spawner],
-        )
+    # ── Localization + Nav2 (map_server, AMCL, planners, controllers) ────────
+    # Delayed so controllers are spawned and odom→base_link TF is publishing
+    # before AMCL and the costmaps come up. Nav2's own launch adds a further
+    # 5 s delay between localization and the navigation servers.
+    nav2 = TimerAction(
+        period=4.0,
+        actions=[
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(launch_dir, 'aiear_nav2.launch.py')),
+                launch_arguments={
+                    'map': LaunchConfiguration('map'),
+                }.items(),
+            ),
+        ],
     )
 
     return LaunchDescription([
-        robot_state_publisher,
-        control_node,
-        joint_state_broadcaster_spawner,
-        delay_diff_drive,
+        map_arg,
+        hardware,
+        rplidar,
+        nav2,
     ])
