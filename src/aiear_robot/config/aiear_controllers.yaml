@@ -33,7 +33,9 @@ diff_drive_controller:
     # use_stamped_vel: false    # accept geometry_msgs/Twist (Nav2 Jazzy output via twist_mux)
 
     # ---- safety / limits ----------------------------------------------
-    cmd_vel_timeout: 0.5      # third watchdog layer, now in the controller
+    # 0.5 s rejected every command on the loaded Pi: pub→controller latency
+    # runs 0.5–1.0 s under Nav2 load, so the controller discarded all of them
+    cmd_vel_timeout: 2.0      # third watchdog layer, now in the controller
     linear.x.max_velocity: 0.5        # m/s — sane indoor speeds; tune
     linear.x.min_velocity: -0.5
     linear.x.max_acceleration: 0.8    # m/s^2 — smooths Nav2's step commands
